@@ -1,5 +1,6 @@
 import curses
 import linuxcnc 
+import hal
 from terminaltables import AsciiTable
 from art import *
 import time
@@ -49,8 +50,8 @@ def jointsTable(stat):
 def statusTable(stat):
     mdiOK = not stat.estop and stat.enabled and stat.homed and (stat.interp_state == linuxcnc.INTERP_IDLE)
     data = []
-    data.append(['OK MDI',  'Homed',    'Enabled',      'EStop'])
-    data.append([mdiOK,    stat.homed,  stat.enabled,  stat.estop])
+    data.append(['OK MDI',  'Homed',    'Enabled',      'EStop',    'ON/OFF'])
+    data.append([mdiOK,    stat.homed,  stat.enabled,  stat.estop,  stat.task_state == linuxcnc.STATE_ON])
     data.append(['     ','     ', '     ', '     '])
     table = AsciiTable(data)
     table.title = "Status"
@@ -87,10 +88,18 @@ def historyTable(stat, history):
     table.inner_column_border = False
     return table.table
 
-def processCLI(cmd, userInput, stdscr):
+def processCLI(cmd, stat, userInput, stdscr):
+    if userInput == "on":
+        stdscr.addstr(29, 0, "Turning machine on ...")
+        stdscr.refresh()
+        cmd.state(linuxcnc.STATE_ESTOP_RESET)
+        cmd.state(linuxcnc.STATE_ON)
+        return "++ Turn on machine"
     if userInput == "home":
-        #for joint in range(5):
-        #    cmd.home(joint)
+        stdscr.addstr(29, 0, "Homing machine ...")
+        stdscr.refresh()
+        for joint in range(len(stat.homed)):
+            cmd.home(joint)
         return  "++ Home command initiated"
     if userInput == "quit":
         return "-- Quit"
@@ -130,7 +139,7 @@ def main(stdscr):
         # Handle user input
         key = stdscr.getch()
         if key == ord('\n'):
-            history.append([processCLI(cmd, userInput, stdscr)])
+            history.insert(0, [processCLI(cmd, stat, userInput, stdscr)])
             if userInput == "quit":
                 break
             userInput = ""
