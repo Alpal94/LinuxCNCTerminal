@@ -35,11 +35,11 @@ def xyzaTable(stat):
 def jointsTable(stat):
     data = []
     joints = stat.joint_position
-    data.append(['X-0', joints[0]])
-    data.append(['Y-1', joints[1]])
-    data.append(['Shoulder-2', joints[2]])
-    data.append(['Elbow-3', joints[3]])
-    data.append(['Wrist-4', joints[4]])
+    data.append(['0-X', joints[0]])
+    data.append(['1-Y', joints[1]])
+    data.append(['2-Shoulder', joints[2]])
+    data.append(['3-Elbow', joints[3]])
+    data.append(['4-Wrist', joints[4]])
     data.append(['                ', '                '])
     table = AsciiTable(data)
     table.title = "Joint Positions"
