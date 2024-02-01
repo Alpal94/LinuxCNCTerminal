@@ -78,6 +78,26 @@ def combineTables(stat, stdscr):
 
     stdscr.addstr(6,0,table2.table)
 
+def historyTable(stat, history):
+    table = AsciiTable(history)
+    table.title = "CLI History"
+    table.inner_row_border = False
+    table.inner_heading_row_border = False
+    table.outer_border = False
+    table.inner_column_border = False
+    return table.table
+
+def processCLI(cmd, userInput, stdscr):
+    if userInput == "home":
+        #for joint in range(5):
+        #    cmd.home(joint)
+        return  "++ Home command initiated"
+    if userInput == "quit":
+        return "-- Quit"
+
+    return  "-- Invalid command"
+
+
 def main(stdscr):
     # Set up curses
     curses.curs_set(0)
@@ -87,6 +107,9 @@ def main(stdscr):
     # Initialize LinuxCNC
     cmd, stat = initialize_linuxcnc()
 
+    
+    userInput = ""
+    history = []
     stdscr.timeout(100)
     while True:
         stdscr.clear()
@@ -98,16 +121,22 @@ def main(stdscr):
         stdscr.addstr(0,0,header)
         combineTables(stat,  stdscr)
 
+        stdscr.addstr(30, 0, "CLI:")
+        stdscr.addstr(31, 0, userInput)
+        stdscr.addstr(32, 0, historyTable(stat, history))
+
         # Refresh the screen
         stdscr.refresh()
-
         # Handle user input
         key = stdscr.getch()
-
-        # Quit the application when 'q' is pressed
-        if key == ord('q'):
-            break
-
+        if key == ord('\n'):
+            history.append([processCLI(cmd, userInput, stdscr)])
+            if userInput == "quit":
+                break
+            userInput = ""
+        else:
+            if 0 <= key <= 255:
+                userInput += chr(key)
         time.sleep(0.1)
 
 if __name__ == "__main__":
