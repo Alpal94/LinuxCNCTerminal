@@ -46,17 +46,37 @@ def jointsTable(stat):
     table.inner_heading_row_border = False
     return table.table
 
+def statusTable(stat):
+    mdiOK = not stat.estop and stat.enabled and stat.homed and (stat.interp_state == linuxcnc.INTERP_IDLE)
+    data = []
+    data.append(['OK MDI',  'Homed',    'Enabled',      'EStop'])
+    data.append([mdiOK,    stat.homed,  stat.enabled,  stat.estop])
+    data.append(['     ','     ', '     ', '     '])
+    table = AsciiTable(data)
+    table.title = "Status"
+    table.inner_row_border = False
+    table.inner_heading_row_border = False
+    return table.table
+
 def combineTables(stat, stdscr):
     xyza = xyzaTable(stat)
     joints = jointsTable(stat)
-    data = []
-    data.append([xyza, joints])
+    data = [[xyza, joints]]
     table = AsciiTable(data)
     table.inner_row_border = False
     table.inner_heading_row_border = False
     table.outer_border = False
     table.inner_column_border = False
-    stdscr.addstr(6,0,table.table)
+
+    status = statusTable(stat)
+    data = [[status], [table.table]]
+    table2 = AsciiTable(data)
+    table2.inner_row_border = False
+    table2.inner_heading_row_border = False
+    table2.outer_border = False
+    table2.inner_column_border = False
+
+    stdscr.addstr(6,0,table2.table)
 
 def main(stdscr):
     # Set up curses
