@@ -8,13 +8,14 @@ import time
 def initialize_linuxcnc():
     c = linuxcnc.command()
     s = linuxcnc.stat()
+    err = linuxcnc.error_channel()
     try:
         s.poll()
     except Exception as e:
         print("Error in poll():", e)
         sys.exit(1)
 
-    return c, s
+    return c, s, err
 
 def xyzaTable(stat):
     data = []
@@ -79,13 +80,14 @@ def combineTables(stat, stdscr):
 
     stdscr.addstr(6,0,table2.table)
 
-def historyTable(stat, history):
+def historyTable(stat, history, title):
     table = AsciiTable(history)
     table.title = "CLI History"
     table.inner_row_border = False
     table.inner_heading_row_border = False
     table.outer_border = False
     table.inner_column_border = False
+    table.title = title
     return table.table
 
 def processCLI(cmd, stat, userInput, stdscr):
@@ -99,6 +101,8 @@ def processCLI(cmd, stat, userInput, stdscr):
         stdscr.addstr(29, 0, "Homing machine ...")
         stdscr.refresh()
         for joint in range(len(stat.homed)):
+            stdscr.addstr(29, 0, "Homing joint " + str(joint)) 
+            stdscr.refresh()
             cmd.home(joint)
         return  "++ Home command initiated"
     if userInput == "quit":
@@ -106,6 +110,13 @@ def processCLI(cmd, stat, userInput, stdscr):
 
     return  "-- Invalid command"
 
+def historyErrorTable(history, errors):
+    table = AsciiTable([['                                                     ', '                                                     '], [history, errors]])
+    table.inner_row_border = False
+    table.inner_heading_row_border = False
+    table.outer_border = False
+    table.inner_column_border = False
+    return table.table
 
 def main(stdscr):
     # Set up curses
@@ -114,25 +125,36 @@ def main(stdscr):
     stdscr.refresh()
 
     # Initialize LinuxCNC
-    cmd, stat = initialize_linuxcnc()
+    cmd, stat, error = initialize_linuxcnc()
 
     
     userInput = ""
     history = []
+    errorList = []
     stdscr.timeout(100)
     while True:
         stdscr.clear()
 
         # Get and display LinuxCNC status
         stat.poll()
+        err = error.poll()
         
         header = text2art("LinuxCNC")
         stdscr.addstr(0,0,header)
         combineTables(stat,  stdscr)
+        if err:
+            kind, text = err
+            typus = "info"
+            if kind in (linuxcnc.NML_ERROR, linuxcnc.OPERATOR_ERROR):
+                typus = "error"
+                stdscr.addstr(26, 0, typus + " " + text)
+            errorList.insert(0, [typus + " " + text])
+        errorsT = historyTable(stat, errorList, "Errors")
+        historyT = historyTable(stat, history, "CLI History")
 
         stdscr.addstr(30, 0, "CLI:")
         stdscr.addstr(31, 0, userInput)
-        stdscr.addstr(32, 0, historyTable(stat, history))
+        stdscr.addstr(32, 0, historyErrorTable(historyT, errorsT))
 
         # Refresh the screen
         stdscr.refresh()
