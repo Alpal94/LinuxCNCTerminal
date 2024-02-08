@@ -100,11 +100,21 @@ def processCLI(cmd, stat, userInput, stdscr):
     if userInput == "home":
         stdscr.addstr(29, 0, "Homing machine ...")
         stdscr.refresh()
+        cmd.mode(linuxcnc.MODE_AUTO)
         for joint in range(len(stat.homed)):
             stdscr.addstr(29, 0, "Homing joint " + str(joint)) 
             stdscr.refresh()
             cmd.home(joint)
         return  "++ Home command initiated"
+    if userInput == "unhome":
+        stdscr.addstr(29, 0, "Unhoming machine ...")
+        stdscr.refresh()
+        cmd.state(linuxcnc.STATE_ESTOP)
+        for joint in range(len(stat.homed)):
+            stdscr.addstr(29, 0, "Unhoming joint " + str(joint)) 
+            stdscr.refresh()
+            cmd.unhome(joint)
+        return  "++ Unhome command initiated"
     if userInput == "quit":
         return "-- Quit"
 
