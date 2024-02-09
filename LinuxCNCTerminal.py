@@ -1,5 +1,6 @@
 import curses
 import linuxcnc 
+import sys
 import hal
 from terminaltables import AsciiTable
 from art import *
