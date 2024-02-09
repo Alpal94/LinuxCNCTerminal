@@ -100,7 +100,10 @@ def processCLI(cmd, stat, userInput, stdscr):
     if userInput == "home":
         stdscr.addstr(29, 0, "Homing machine ...")
         stdscr.refresh()
-        cmd.mode(linuxcnc.MODE_AUTO)
+        cmd.mode(linuxcnc.MODE_MANUAL)
+        cmd.wait_complete()
+        cmd.teleop_enable(False)
+        cmd.wait_complete()
         for joint in range(len(stat.homed)):
             stdscr.addstr(29, 0, "Homing joint " + str(joint)) 
             stdscr.refresh()
